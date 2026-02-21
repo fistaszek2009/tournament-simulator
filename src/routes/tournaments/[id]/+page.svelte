@@ -17,6 +17,7 @@
 		position: number;
 		players: (Member | null)[];
 		winnerMemberId: number | null;
+		isByeSingle?: boolean;
 	};
 
 	type Round = {
@@ -88,13 +89,27 @@
 			const byePlayers = members.slice(preliminaryPlayersCount);
 
 			const preliminaryMatchesList = createMatches(preliminaryPlayers, round, winnersMap);
-			rounds.push({
-				label: roundLabel(preliminaryPlayers.length, true),
-				matches: preliminaryMatchesList
+
+			const byeMatches = byePlayers.map((p, idx) => {
+				const position = preliminaryMatchesList.length + idx;
+				const matchId = getMatchId(round, position);
+				return {
+					round,
+					position,
+					players: [p, null],
+					winnerMemberId: winnersMap[matchId] ?? null,
+					isByeSingle: true
+				};
 			});
 
 			const preliminaryWinners = preliminaryMatchesList.map(winnerFromMatch);
 			participants = [...byePlayers, ...preliminaryWinners];
+
+			const combinedPreliminary = [ ...byeMatches, ...preliminaryMatchesList];
+			rounds.push({
+				label: roundLabel(preliminaryPlayers.length, true),
+				matches: combinedPreliminary
+			});
 			round += 1;
 		} else {
 			participants = [...members];
@@ -191,23 +206,25 @@
 				</p>
 				<div class="bracket-scroll">
 					<div class="bracket-grid">
-						{#each bracketRounds as round}
+						{#each bracketRounds as round, ridx}
 							<div class="round-column">
 								<div class="round-title">{round.label}</div>
 								<div class="matches">
 									{#each round.matches as match}
 										<div class="match-card">
-											{#each match.players as member}
-												<button
+											{#each match.players as member, idx}
+												{#if member || ridx !== 0}
+													<button
 													type="button"
-													class="player-slot {match.winnerMemberId === member?.memberId ? 'winner' : ''}"
-													disabled={!member}
-													on:click={() => member && toggleWinner(match, member)}
+													class="player-slot {match.winnerMemberId === member?.memberId ? 'winner' : ''} {match.isByeSingle && ridx === 0 ? 'eliminations-pass' : ''}"
+													disabled={!member || (match.isByeSingle && idx === 0)}
+													on:click={() => member && !match.isByeSingle && toggleWinner(match, member)}
 												>
 													<span class="player-name">
 														{member ? displayName(member) : '--------'}
 													</span>
 												</button>
+												{/if}
 											{/each}
 										</div>
 									{/each}
@@ -322,6 +339,13 @@
 		cursor: not-allowed;
 		opacity: 0.5;
 	}
+
+	.eliminations-pass{
+		opacity:1 !important;
+ 		border-color: rgba(27, 92, 129, 0.8);
+		background: rgba(22, 163, 156, 0.25);
+		color: #6391e7;
+		box-shadow: 0 0 0 1px rgba(34, 178, 197, 0.4);	}
 
 	.player-slot:hover:not(:disabled) {
 		border-color: rgba(96, 165, 250, 0.8);

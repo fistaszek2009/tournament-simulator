@@ -6,6 +6,7 @@
 
 	let dialogElement: HTMLDialogElement;
 	let name = '';
+	let pairBy = 'surname';
 	let selectedPlayers = new Set<number>();
 	let isSubmitting = false;
 	let error: string | null = null;
@@ -108,6 +109,15 @@
 							</label>
 					{/each}
 				</div>
+			</div>
+
+			<div class="form-group">
+				<h4 class="label mb-2">Pair players by</h4>
+				<select name="pairBy" bind:value={pairBy} class="w-full p-2 rounded-md text-black">
+					<option value="surname"> Surname</option>
+					<option value="age">Age</option>
+					<option value="register_date">Register Date</option>
+				</select>
 			</div>
 
 			{#if error}

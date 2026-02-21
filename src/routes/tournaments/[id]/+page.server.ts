@@ -21,6 +21,8 @@ export const load = (async ({ params }) => {
 		throw error(404, 'Tournament not found');
 	}
 
+	const orderByField = tournament[0].pair_by === 'age' ? users.age : tournament[0].pair_by === 'name' ? users.surname : users.register_date;
+
 	const members = await db
 		.select({
 			id: tournamentMembers.id,
@@ -34,7 +36,7 @@ export const load = (async ({ params }) => {
 		.from(tournamentMembers)
 		.innerJoin(users, eq(tournamentMembers.playerId, users.id))
 		.where(eq(tournamentMembers.tournamentId, tournamentId))
-		.orderBy(users.name);
+		.orderBy(orderByField);
 
 	const matches = await db
 		.select()

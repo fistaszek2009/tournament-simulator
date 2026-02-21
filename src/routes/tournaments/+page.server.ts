@@ -14,6 +14,7 @@ export const actions = {
   addTournament: async ({ request }) => {
     const formData = await request.formData();
     const name = formData.get('name')?.toString() || '';
+    const pairBy = formData.get('pairBy')?.toString() || 'name';
     const playerIds = formData.getAll('playerIds').map(id => parseInt(id.toString())).filter(id => !isNaN(id));
     
     if (!name.trim()) {
@@ -27,6 +28,7 @@ export const actions = {
     try {
       const result = await db.insert(tournaments).values({
         name: name.trim(),
+        pair_by: pairBy
       }).returning();
 
       const tournamentId = result[0].id;
