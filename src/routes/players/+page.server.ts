@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/server/db';
-import { users } from '$lib/server/db/schema';
+import { users, tournamentMembers } from '$lib/server/db/schema';
 import { fail } from '@sveltejs/kit';
 import { eq } from "drizzle-orm";
 
@@ -24,7 +24,6 @@ export const actions = {
     const age = formData.get('age')?.toString() || '';
     const country = formData.get('country')?.toString() || '';
 
-    // Walidacja
     if (!name.trim()) {
       return fail(400, { fieldError: 'name', message: 'Imię jest wymagane' });
     }
@@ -86,6 +85,13 @@ export const actions = {
     const formData = await request.formData();
     const id = parseInt(formData.get('id')?.toString() || '');
     if (Number.isNaN(id)) return fail(400, { message: 'Nieprawidłowe id' });
+
+    const usedPlayers = await db.select().from(tournamentMembers).where(eq(tournamentMembers.playerId,id));
+
+    if (usedPlayers.length > 0){
+      console.error('Nie można usunąć użytkownika, bo jest graczem w istniejacym turnieju');
+      return fail(500, { message: 'You cannot delete a player who is a member of a tournament.' });
+    }
 
     try {
       await db.delete(users).where(eq(users.id,id));

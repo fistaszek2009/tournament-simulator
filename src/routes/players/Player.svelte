@@ -9,6 +9,9 @@
   function openEdit() {
     document.dispatchEvent(new CustomEvent('open-player-form', { detail: { mode: 'edit', user: { id, name, surname, age, country } } }));
   }
+  function openDeleteDialog() {
+		document.dispatchEvent(new CustomEvent('open-delete-dialog', { detail: { id: id}}));
+	}
 </script>
 
 <div class="player-card">
@@ -22,14 +25,7 @@
     </div>
   <div class="player-actions">
     <button class="btn-edit" on:click={openEdit} aria-label="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
-    <form method="POST" action="?/deleteUser" use:enhance={({ formData }) => {
-      return async ({ result }) => {
-        if (result.type === 'success') location.reload();
-      }
-    }}>
-      <input type="hidden" name="id" value={id} />
-      <button type="submit" class="btn-delete" aria-label="Delete"><i class="fa-solid fa-trash"></i></button>
-    </form>
+    <button class="btn-delete" on:click={openDeleteDialog} aria-label="Delete"><i class="fa-solid fa-trash"></i></button>
   </div>
 </div>
 

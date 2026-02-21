@@ -5,8 +5,9 @@
 </script>
 
 <header class="bg-gray-700 flex justify-between">
-	<div class="flex items-center justify-center w-20 p-3">
-			<img src={logo} alt="Throphy logo"/>
+	<div class="flex items-center justify-center p-3 gap-2">
+			<img src={logo} class="w-[45px]" alt="Throphy logo"/>
+			<h1 class="font-bold text-white text-2xl">Tournament simulator</h1>
 	</div>
 
 	<nav class="flex justify-center items-center">
@@ -23,8 +24,8 @@
 		display:flex;
 		justify-content: center;
 		align-items: center;
-		font-size: 1.25em;
-		font-weight: 700;
-		width:160px;
+		font-size: 1em;
+		font-weight: 600;
+		width:140px;
 	}
 </style>
