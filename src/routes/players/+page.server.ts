@@ -1,12 +1,19 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/server/db';
-import { user } from '$lib/server/db/schema';
+import { users } from '$lib/server/db/schema';
 import { fail } from '@sveltejs/kit';
 import { eq } from "drizzle-orm";
 
 export const load = (async () => {
-  const users = await db.select().from(user).orderBy(user.id);
-  return { users };
+  const players = await db.select().from(users).orderBy(users.id);
+  return { players };
+  // try {
+  //     await db.update(users).set({ name: name.trim(), surname: surname.trim(), age: ageNum, country: country.trim() }).where(eq(users.id,id));
+  //     return { success: true };
+  //   } catch (error) {
+  //     console.error('Błąd przy edycji użytkownika:', error);
+  //     return fail(500, { message: 'Błąd przy edycji użytkownika' });
+  //   }
 }) satisfies PageServerLoad;
 
 export const actions = {
@@ -37,7 +44,7 @@ export const actions = {
     }
 
     try {
-      await db.insert(user).values({
+      await db.insert(users).values({
         name: name.trim(),
         surname: surname.trim(),
         age: ageNum,
@@ -68,7 +75,7 @@ export const actions = {
     }
 
     try {
-      await db.update(user).set({ name: name.trim(), surname: surname.trim(), age: ageNum, country: country.trim() }).where(eq(user.id,id));
+      await db.update(users).set({ name: name.trim(), surname: surname.trim(), age: ageNum, country: country.trim() }).where(eq(users.id,id));
       return { success: true };
     } catch (error) {
       console.error('Błąd przy edycji użytkownika:', error);
@@ -81,7 +88,7 @@ export const actions = {
     if (Number.isNaN(id)) return fail(400, { message: 'Nieprawidłowe id' });
 
     try {
-      await db.delete(user).where(eq(user.id,id));
+      await db.delete(users).where(eq(users.id,id));
       return { success: true };
     } catch (error) {
       console.error('Błąd przy usuwaniu użytkownika:', error);

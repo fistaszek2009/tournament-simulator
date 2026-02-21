@@ -71,7 +71,7 @@
 						close();
 						location.reload();
 					} else if (result.type === 'failure') {
-						error = result.data?.message || 'Błąd';
+						error = String(result.data?.message) || 'Błąd';
 					}
 				};
 			}}
@@ -97,7 +97,9 @@
 			{/if}
 
 			<div class="button-group">
-				<button type="submit" disabled={isSubmitting} class="btn-add bg-green-900">
+				<button type="submit" 
+				disabled={isSubmitting || name.trim() === "" || surname.trim() === "" || country.trim() === "" || !age} 
+				class="btn-add bg-green-900">
 					{isSubmitting ? (mode === 'add' ? 'Adding...' : 'Saving...') : (mode === 'add' ? 'Add' : 'Save')}
 				</button>
 				<button type="button" on:click={close} class="btn-cancel bg-red-900">Cancel</button>
