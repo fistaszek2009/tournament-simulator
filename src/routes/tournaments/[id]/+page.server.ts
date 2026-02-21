@@ -1,8 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/server/db';
-import { tournaments, tournamentMembers, tournamentMatches, users } from '$lib/server/db/schema';
-import { eq, and, isNull } from 'drizzle-orm';
-import { error, fail } from '@sveltejs/kit';
+import { tournaments, tournamentMembers, users, tournamentMatches } from '$lib/server/db/schema';
+import { eq, and } from 'drizzle-orm';
+import { error } from '@sveltejs/kit';
 
 export const load = (async ({ params }) => {
 	const tournamentId = parseInt(params.id);
@@ -37,125 +37,72 @@ export const load = (async ({ params }) => {
 		.orderBy(users.name);
 
 	const matches = await db
-		.select({
-			id: tournamentMatches.id,
-			round: tournamentMatches.round,
-			position: tournamentMatches.position,
-			player1: {
-				id: tournamentMatches.player1MemberId,
-				name: users.name,
-				surname: users.surname
-			},
-			player2: {
-				id: tournamentMatches.player2MemberId,
-				name: users.name,
-				surname: users.surname
-			},
-			score1: tournamentMatches.score1,
-			score2: tournamentMatches.score2,
-			winnerId: tournamentMatches.winnerMemberId,
-			nextMatchId: tournamentMatches.nextMatchId
-		})
-		.from(tournamentMatches)
-		.leftJoin(users, eq(tournamentMatches.player1MemberId, tournamentMembers.id))
-		.where(eq(tournamentMatches.tournamentId, tournamentId));
-
-	// Simplified matches loading
-	const rawMatches = await db
 		.select()
 		.from(tournamentMatches)
 		.where(eq(tournamentMatches.tournamentId, tournamentId));
 
-	// Get all member info
-	const memberMap = new Map(members.map(m => [m.id, m]));
-
 	return {
 		tournament: tournament[0],
 		members,
-		matches: rawMatches.map(m => ({
-			...m,
-			player1Info: m.player1MemberId ? memberMap.get(m.player1MemberId) : null,
-			player2Info: m.player2MemberId ? memberMap.get(m.player2MemberId) : null,
-			winnerInfo: m.winnerMemberId ? memberMap.get(m.winnerMemberId) : null
-		}))
+		matches
 	};
 }) satisfies PageServerLoad;
 
-export const actions = {
-	updateScore: async ({ request }) => {
-		const formData = await request.formData();
-		const matchId = parseInt(formData.get('matchId')?.toString() || '');
-		const score1 = parseInt(formData.get('score1')?.toString() || '');
-		const score2 = parseInt(formData.get('score2')?.toString() || '');
-
-		if (isNaN(matchId) || isNaN(score1) || isNaN(score2)) {
-			return fail(400, { message: 'Nieprawidłowe dane' });
+export const actions: Actions = {
+	saveMatch: async ({ request, params }) => {
+		const tournamentId = parseInt(params.id);
+		if (isNaN(tournamentId)) {
+			throw error(400, 'Invalid tournament ID');
 		}
 
-		try {
-			const match = await db
-				.select()
-				.from(tournamentMatches)
-				.where(eq(tournamentMatches.id, matchId))
-				.limit(1);
+		const formData = await request.formData();
+		const round = parseInt(formData.get('round') as string);
+		const position = parseInt(formData.get('position') as string);
+		const winnerMemberId = formData.get('winnerMemberId') 
+			? parseInt(formData.get('winnerMemberId') as string) 
+			: null;
 
-			if (match.length === 0) {
-				return fail(404, { message: 'Mecz nie znaleziony' });
-			}
+		if (isNaN(round) || isNaN(position)) {
+			throw error(400, 'Invalid round or position');
+		}
 
-			const m = match[0];
+		const existingMatch = await db
+			.select()
+			.from(tournamentMatches)
+			.where(
+				and(
+					eq(tournamentMatches.tournamentId, tournamentId),
+					eq(tournamentMatches.round, round),
+					eq(tournamentMatches.position, position)
+				)
+			)
+			.limit(1);
 
-			// Determine winner
-			let winnerId: number | null = null;
-			if (score1 > score2 && m.player1MemberId) {
-				winnerId = m.player1MemberId;
-			} else if (score2 > score1 && m.player2MemberId) {
-				winnerId = m.player2MemberId;
-			}
-
-			// Update match
+		if (existingMatch.length > 0) {
+			// Update existing match
 			await db
 				.update(tournamentMatches)
-				.set({
-					score1,
-					score2,
-					winnerMemberId: winnerId
-				})
-				.where(eq(tournamentMatches.id, matchId));
-
-			// If there's a next match and there's a winner, advance them
-			if (winnerId && m.nextMatchId) {
-				const nextMatch = await db
-					.select()
-					.from(tournamentMatches)
-					.where(eq(tournamentMatches.id, m.nextMatchId))
-					.limit(1);
-
-				if (nextMatch.length > 0) {
-					const nxt = nextMatch[0];
-							// Position matters: each match gets a player in the next round
-					// Match 0 and 1 go to next round position 0, etc.
-					const isFirstInRound = m.position % 2 === 1;
-					const nextMatchSlot = isFirstInRound;  // First in pair goes to player1
-
-					if (isFirstInRound || nxt.player1MemberId === null) {
-						await db
-							.update(tournamentMatches)
-							.set({ player1MemberId: winnerId })
-							.where(eq(tournamentMatches.id, m.nextMatchId));
-					} else {
-						await db
-							.update(tournamentMatches)
-							.set({ player2MemberId: winnerId })
-							.where(eq(tournamentMatches.id, m.nextMatchId));
-					}
-				}
-			}
-
-			return { success: true, message: 'Wynik zaktualizowany!' };
-		} catch (err) {
-			console.error('Błąd przy aktualizacji wyniku:', err);
-			return fail(500, { message: 'Błąd przy aktualizacji wyniku' });
+				.set({ winnerMemberId })
+				.where(
+					and(
+						eq(tournamentMatches.tournamentId, tournamentId),
+						eq(tournamentMatches.round, round),
+						eq(tournamentMatches.position, position)
+					)
+				);
+		} else {
+			// Create new match record - first we need to find the players for this match
+			// For now, we'll just insert with winner
+			await db.insert(tournamentMatches).values({
+				tournamentId,
+				round,
+				position,
+				player1MemberId: null,
+				player2MemberId: null,
+				winnerMemberId
+			});
 		}
+
+		return { success: true };
 	}
-} satisfies Actions;
+};

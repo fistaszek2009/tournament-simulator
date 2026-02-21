@@ -28,7 +28,7 @@
 {#if !page.data.players || page.data.players.length === 0}
 	<h2 class="text-2xl font-bold text-white text text-center mt-5">There are no added players yet...</h2>
 {:else}
-	<h2 class="text-2xl font-bold text-white text text-center mt-5 border-b-2 pb-4">Players</h2>
+	<h2 class="text-2xl font-bold text-white text text-center mt-5 border-b-2 pb-4">Players - {page.data.players.length}</h2>
 	<div class="flex flex-col gap-4 items-center py-4 w-full">
 		{#each page.data.players as p}
 			<Player id={p.id} name={p.name} surname={p.surname} age={p.age} country={p.country} />
