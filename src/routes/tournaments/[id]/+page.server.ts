@@ -79,7 +79,6 @@ export const actions: Actions = {
 			.limit(1);
 
 		if (existingMatch.length > 0) {
-			// Update existing match
 			await db
 				.update(tournamentMatches)
 				.set({ winnerMemberId })
@@ -91,8 +90,6 @@ export const actions: Actions = {
 					)
 				);
 		} else {
-			// Create new match record - first we need to find the players for this match
-			// For now, we'll just insert with winner
 			await db.insert(tournamentMatches).values({
 				tournamentId,
 				round,

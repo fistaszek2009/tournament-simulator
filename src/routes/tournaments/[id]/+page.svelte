@@ -144,10 +144,8 @@
 		const current = winners[matchId] ?? null;
 		const next = current === member.memberId ? null : member.memberId;
 		
-		// Save to server
 		await saveMatchResult(match.round, match.position, next);
 		
-		// Update UI after successful save
 		winners = { ...winners, [matchId]: next };
 	};
 
@@ -207,7 +205,7 @@
 													on:click={() => member && toggleWinner(match, member)}
 												>
 													<span class="player-name">
-														{member ? displayName(member) : 'TBD'}
+														{member ? displayName(member) : '--------'}
 													</span>
 												</button>
 											{/each}
@@ -236,7 +234,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.5rem;
-		color: #60a5fa;
+		color: #b4c2d4;
 		text-decoration: none;
 		font-size: 0.95rem;
 		margin-bottom: 1rem;
@@ -251,7 +249,7 @@
 		font-size: 2.25rem;
 		font-weight: bold;
 		color: white;
-		border-bottom: 3px solid #60a5fa;
+		border-bottom: 3px solid #b4c2d4;
 		padding-bottom: 1rem;
 	}
 
@@ -274,6 +272,8 @@
 		border-radius: 0.75rem;
 		padding: 1rem;
 		min-height: 100%;
+        display:flex;
+        flex-direction: column;
 	}
 
 	.round-title {
@@ -286,9 +286,11 @@
 	}
 
 	.matches {
+        flex:1;
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
+        justify-content: center;
 	}
 
 	.match-card {
@@ -305,7 +307,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 0.75rem;
+		gap: 0.25rem;
 		padding: 0.6rem 0.75rem;
 		background: rgba(15, 23, 42, 0.7);
 		color: #e2e8f0;
@@ -332,6 +334,17 @@
 		color: #bbf7d0;
 		box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.4);
 	}
+
+    .round-column:nth-last-child(1) .player-slot.winner{
+        border-color: rgba(194, 197, 34, 0.8);
+		background: rgba(163, 142, 22, 0.25);
+		color: #e2b009;
+		box-shadow: 0 0 0 1px rgba(167, 197, 34, 0.4);
+    }
+
+    .round-column:nth-last-child(1) .player-slot.winner::before{
+        content: "👑"
+    }
 
 	.player-name {
 		white-space: nowrap;
