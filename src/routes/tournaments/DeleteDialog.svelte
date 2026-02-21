@@ -38,7 +38,7 @@
 		<h4 class="title">Do you want to delete tournament?</h4>
 		<form
 			method="POST"
-			action="?/deleteUser"
+			action="?/deleteTournament"
 			use:enhance={() => {
 				isSubmitting = true;
 				return async ({ result }) => {
