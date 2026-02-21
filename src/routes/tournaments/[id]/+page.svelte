@@ -323,8 +323,7 @@
 	.player-slot {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
-		gap: 0.25rem;
+		gap: 0.4rem;
 		padding: 0.6rem 0.75rem;
 		background: rgba(15, 23, 42, 0.7);
 		color: #e2e8f0;

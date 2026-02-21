@@ -1,42 +1,104 @@
-# sv
+# Tournament simulator
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
 
-## Creating a project
+## How to set up project?
 
-If you're seeing this, you've probably already done this step. Congrats!
+This project is built with **SvelteKit**, uses **PostgreSQL** as the database, and **Drizzle ORM** for database access and migrations.
 
-```sh
-# create a new project
-npx sv create my-app
+### Requirements
+
+Make sure you have installed:
+
+* Node.js
+* npm (or pnpm/yarn)
+* Docker
+
+---
+
+## 1. Install dependencies
+
+```bash
+npm install
 ```
 
-To recreate this project with the same configuration:
+---
 
-```sh
-# recreate this project
-npx sv create --template demo --types ts --add prettier tailwindcss="plugins:forms" eslint drizzle="database:postgresql+postgresql:postgres.js+docker:yes" --install npm .
+## 2. Start PostgreSQL (Docker)
+
+The project expects a local PostgreSQL instance.
+
+You can start one quickly using Docker:
+
+```bash
+docker run --name sv-postgres \
+  -e POSTGRES_USER=root \
+  -e POSTGRES_PASSWORD=mysecretpassword \
+  -e POSTGRES_DB=local \
+  -p 5432:5432 \
+  -d postgres
 ```
 
-## Developing
+This will:
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+* create a database named `local`
+* expose it on `localhost:5432`
+* use `root / mysecretpassword` as credentials
 
-```sh
+To verify the container is running:
+
+```bash
+docker ps
+```
+
+---
+
+## 3. Environment variables
+
+Create a `.env` file in the root of the project:
+
+```env
+DATABASE_URL="postgres://root:mysecretpassword@localhost:5432/local"
+```
+
+Make sure the credentials match the ones used in the Docker command.
+
+If you already have PostgreSQL running locally, you can adjust `DATABASE_URL` accordingly.
+
+---
+
+## 4. Run database migrations (Drizzle)
+
+
+```bash
+npm run db:generate
+npm run db:migrate
+```
+
+This will create and apply the database schema.
+
+---
+
+## 5. Start the development server
+
+```bash
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+By default, the app will be available at:
 
-To create a production version of your app:
-
-```sh
-npm run build
+```
+http://localhost:5173
 ```
 
-You can preview the production build with `npm run preview`.
+---
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## Common issues
+
+**Database connection errors**
+
+* Make sure Docker is running.
+* Check that the container is active (`docker ps`).
+* Verify `DATABASE_URL` matches your database credentials.
+* Ensure port `5432` is not used by another PostgreSQL instance.
+
+---

@@ -96,8 +96,6 @@ export const actions: Actions = {
 				tournamentId,
 				round,
 				position,
-				player1MemberId: null,
-				player2MemberId: null,
 				winnerMemberId
 			});
 		}
