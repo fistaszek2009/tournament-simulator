@@ -12,6 +12,7 @@
 			document.addEventListener('open-delete-dialog', (e: Event) => {
 				const ev = e as CustomEvent;
 				id = ev.detail.id;
+				console.log(id)
 				open();
 			});
 		}
@@ -37,7 +38,7 @@
 		<h4 class="title">Do you want to delete tournament?</h4>
 		<form
 			method="POST"
-			action="?/deleteTournament"
+			action="?/deleteUser"
 			use:enhance={() => {
 				isSubmitting = true;
 				return async ({ result }) => {

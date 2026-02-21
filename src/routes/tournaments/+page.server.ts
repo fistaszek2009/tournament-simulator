@@ -3,6 +3,7 @@ import { db } from '$lib/server/db';
 import { tournaments, users, tournamentMembers } from '$lib/server/db/schema';
 import { fail } from '@sveltejs/kit';
 import { eq } from "drizzle-orm";
+import { generateBracket } from '$lib/server/bracket-generator';
 
 export const load = (async () => {
   const players = await db.select().from(users).orderBy(users.id);
@@ -33,14 +34,18 @@ export const actions = {
       const tournamentId = result[0].id;
 
       // Add players to tournament
-      await db.insert(tournamentMembers).values(
+      const members = await db.insert(tournamentMembers).values(
         playerIds.map(playerId => ({
           tournamentId,
           playerId
         }))
-      );
+      ).returning();
 
-      return { success: true, message: 'Turniej dodany pomyślnie!' };
+      // Generate bracket after players are added
+      const memberIds = members.map(m => m.id);
+      await generateBracket(tournamentId, memberIds);
+
+      return { success: true, message: 'Turniej dodany pomyślnie! Drzewo turniejowe zostało wygenerowane.' };
     } catch (error) {
       console.error('Błąd przy dodawaniu turnieju:', error);
       return fail(500, { message: 'Błąd przy dodawaniu turnieju' });
