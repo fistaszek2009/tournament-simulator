@@ -28,4 +28,13 @@
 		font-weight: 600;
 		width:140px;
 	}
+	@media (max-width: 750px) {
+		header>div>h1{display: none;}
+	}	
+	@media (max-width: 700px) {
+		nav a{
+			width:100px;
+			font-size: 0.9em;
+		}
+	}	
 </style>

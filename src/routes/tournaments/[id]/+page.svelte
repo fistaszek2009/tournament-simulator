@@ -68,7 +68,7 @@
 	const winnerFromMatch = (match: Match) =>
 		match.players.find((player) => player?.memberId === match.winnerMemberId) ?? null;
 
-	const buildBracket = (members: Member[], winnersMap: Record<string, number | null>) => {
+	const buildBracket = (members: Member[], winnersMap: Record<string, number | null>, showPreliminaryByePlayers: boolean) => {
 		const rounds: Round[] = [];
 		const totalPlayers = members.length;
 
@@ -105,7 +105,7 @@
 			const preliminaryWinners = preliminaryMatchesList.map(winnerFromMatch);
 			participants = [...byePlayers, ...preliminaryWinners];
 
-			const combinedPreliminary = [ ...byeMatches, ...preliminaryMatchesList];
+			const combinedPreliminary = [ ...( showPreliminaryByePlayers ? byeMatches : []), ...preliminaryMatchesList];
 			rounds.push({
 				label: roundLabel(preliminaryPlayers.length, true),
 				matches: combinedPreliminary
@@ -164,6 +164,13 @@
 		winners = { ...winners, [matchId]: next };
 	};
 
+	const needsPreliminary = (members: 	Member[]) => {
+		const powerOfTwo = 2 ** Math.floor(Math.log2(members.length));
+		return members.length !== powerOfTwo;
+	}
+
+	let preliminaryShowByePlayers = true;
+
 	$: members = (page.data.members || []).map((member: any) => ({
 		memberId: member.id,
 		id: member.playerId,
@@ -185,7 +192,44 @@
 		winners = newWinners;
 	}
 
-	$: bracketRounds = buildBracket(members, winners);
+	$: bracketRounds = buildBracket(members, winners, preliminaryShowByePlayers);
+
+import { onMount, onDestroy } from 'svelte';
+
+let topScroll: HTMLDivElement | null = null;
+let bottomScroll: HTMLDivElement | null = null;
+let topSpacer: HTMLDivElement | null = null;
+let ro: ResizeObserver | null = null;
+
+const updateTopSpacer = () => {
+	if (!bottomScroll || !topSpacer) return;
+	topSpacer.style.width = `${bottomScroll.scrollWidth}px`;
+};
+
+const onTopScroll = () => {
+	if (!topScroll || !bottomScroll) return;
+	bottomScroll.scrollLeft = topScroll.scrollLeft;
+};
+
+const onBottomScroll = () => {
+	if (!topScroll || !bottomScroll) return;
+	topScroll.scrollLeft = bottomScroll.scrollLeft;
+};
+
+onMount(() => {
+	updateTopSpacer();
+	if (bottomScroll) {
+		ro = new ResizeObserver(() => updateTopSpacer());
+		ro.observe(bottomScroll);
+	}
+	window.addEventListener('resize', updateTopSpacer);
+});
+
+onDestroy(() => {
+	if (ro && bottomScroll) ro.unobserve(bottomScroll);
+	ro = null;
+});
+
 </script>
 
 <svelte:head>
@@ -201,44 +245,64 @@
 	</div>
 
 		<div class="bracket-section">
-                <p class="bracket-hint">
-					Click a player to advance them. Click again to undo.
-				</p>
-				<div class="bracket-scroll">
-					<div class="bracket-grid">
+				<div class="flex justify-between gap-8 flex-wrap">
+					{#if needsPreliminary(members)}
+					<p class="bracket-hint">
+						<label for="preliminary">
+							<input id="preliminary" type="checkbox" bind:checked={preliminaryShowByePlayers}> Show preliminary bye players
+						</label>
+					</p>
+					{:else}
+					<i></i>
+					{/if}
+					<p class="bracket-hint">
+						Click a player to advance them. Click again to undo.
+					</p>
+				</div>
+
+				<div class="bracket-scroll-wrapper">
+					<div class="bracket-scroll-top" bind:this={topScroll} on:scroll={onTopScroll} aria-hidden="true">
+						<div class="top-spacer" bind:this={topSpacer}></div>
+					</div>
+					<div class="bracket-scroll" bind:this={bottomScroll} on:scroll={onBottomScroll}>
+						<div class="bracket-grid">
 						{#each bracketRounds as round, ridx}
 							<div class="round-column">
 								<div class="round-title">{round.label}</div>
-								<div class="matches">
-									{#each round.matches as match}
-										<div class="match-card">
-											{#each match.players as member, idx}
-												{#if member || ridx !== 0}
-													<button
-													type="button"
-													class="player-slot {match.winnerMemberId === member?.memberId ? 'winner' : ''} {match.isByeSingle && ridx === 0 ? 'eliminations-pass' : ''}"
-													disabled={!member || (match.isByeSingle && idx === 0)}
-													on:click={() => member && !match.isByeSingle && toggleWinner(match, member)}
-												>
-													<span class="player-name">
-														{member ? displayName(member) : '--------'}
-													</span>
-												</button>
-												{/if}
-											{/each}
-										</div>
-									{/each}
-								</div>
+
+									<div class="matches">
+										{#each round.matches as match}
+											<div class="match-card">
+												{#each match.players as member, idx}
+													{#if member || ridx !== 0}
+														<button
+														type="button"
+														class="player-slot {match.winnerMemberId === member?.memberId ? 'winner' : ''} {match.isByeSingle && ridx === 0 ? 'eliminations-pass' : ''}"
+														disabled={!member || (match.isByeSingle && idx === 0)}
+														on:click={() => member && !match.isByeSingle && toggleWinner(match, member)}
+													>
+														<span class="player-name">
+															{member ? displayName(member) : '--------'}
+														</span>
+													</button>
+													{/if}
+												{/each}
+											</div>
+										{/each}
+									</div>
+
 							</div>
 						{/each}
 					</div>
 				</div>
-		</div>
+			</div>
+	</div>
 </div>
 
 <style>
 	.tournament-container {
 		max-width: 1200px;
+		max-width: 100%;
 		margin: 0 auto;
 		padding: 2rem 1rem;
 	}
@@ -272,7 +336,22 @@
 
 	.bracket-scroll {
 		overflow-x: auto;
-		padding-bottom: 0.5rem;
+		padding-bottom: 0.75rem;
+	}
+
+	.bracket-scroll-wrapper {
+		display: block;
+	}
+
+	.bracket-scroll-top {
+		overflow-x: auto;
+		overflow-y: hidden;
+		height: 14px;
+		margin-bottom: 6px;
+	}
+
+	.bracket-scroll-top .top-spacer {
+		height: 1px;
 	}
 
 	.bracket-grid {
@@ -376,19 +455,21 @@
 	}
 
 	.bracket-hint {
-		margin-bottom: 1rem;
 		color: #b4c2d4;
 		font-size: 0.9rem;
 		text-align: right;
 	}
 
-	@media (max-width: 768px) {
+	@media (max-width: 775px) {
 		.tournament-content {
 			grid-template-columns: 1fr;
 		}
 
 		.tournament-title {
 			font-size: 1.75rem;
+		}
+		.bracket-section>div:has(p.bracket-hint){
+		gap:0.25rem;
 		}
 	}
 </style>
