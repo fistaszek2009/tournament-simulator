@@ -100,5 +100,25 @@ export const actions = {
       console.error('Błąd przy usuwaniu użytkownika:', error);
       return fail(500, { message: 'Błąd przy usuwaniu użytkownika' });
     }
+  },
+   deleteAllUsers: async ({ request }) => {
+    const formData = await request.formData();
+    const id = parseInt(formData.get('id')?.toString() || '');
+    if (Number.isNaN(id)) return fail(400, { message: 'Nieprawidłowe id' });
+
+    const usedPlayers = await db.select().from(tournamentMembers).where(eq(tournamentMembers.playerId,id));
+
+    if (usedPlayers.length > 0){
+      console.error('Nie można usunąć użytkownika, bo jest graczem w istniejacym turnieju');
+      return fail(500, { message: 'You cannot delete a player who is a member of a tournament.' });
+    }
+
+    try {
+      await db.delete(users).where(eq(users.id,id));
+      return { success: true };
+    } catch (error) {
+      console.error('Błąd przy usuwaniu użytkownika:', error);
+      return fail(500, { message: 'Błąd przy usuwaniu użytkownika' });
+    }
   }
 } satisfies Actions;

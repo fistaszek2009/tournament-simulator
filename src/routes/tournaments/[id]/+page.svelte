@@ -144,7 +144,6 @@
 			});
 			
 			if (response.ok) {
-				// Revalidate page data after successful save
 				await invalidateAll();
 			} else {
 				console.error('Failed to save match result');

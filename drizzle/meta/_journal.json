@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1772022753146,
+      "tag": "0000_legal_wendigo",
+      "breakpoints": true
+    }
+  ]
+}
