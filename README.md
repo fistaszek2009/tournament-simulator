@@ -5,25 +5,13 @@
 
 This project is built with **SvelteKit**, uses **PostgreSQL** as the database, and **Drizzle ORM** for database access and migrations.
 
-### Requirements
-
-Make sure you have installed:
-
-* Node.js
-* npm (or pnpm/yarn)
-* Docker
-
----
-
-## 1. Install dependencies
+### 1. Install dependencies
 
 ```bash
 npm install
 ```
 
----
-
-## 2. Start PostgreSQL (Docker)
+### 2. Start PostgreSQL (Docker)
 
 The project expects a local PostgreSQL instance.
 
@@ -50,9 +38,7 @@ To verify the container is running:
 docker ps
 ```
 
----
-
-## 3. Environment variables
+### 3. Environment variables
 
 Create a `.env` file in the root of the project:
 
@@ -64,10 +50,8 @@ Make sure the credentials match the ones used in the Docker command.
 
 If you already have PostgreSQL running locally, you can adjust `DATABASE_URL` accordingly.
 
----
 
-## 4. Run database migrations (Drizzle)
-
+### 4. Run database migrations (Drizzle)
 
 ```bash
 npm run db:generate
@@ -76,9 +60,7 @@ npm run db:migrate
 
 This will create and apply the database schema.
 
----
-
-## 5. Start the development server
+### 5. Start the development server
 
 ```bash
 npm run dev
@@ -89,16 +71,3 @@ By default, the app will be available at:
 ```
 http://localhost:5173
 ```
-
----
-
-## Common issues
-
-**Database connection errors**
-
-* Make sure Docker is running.
-* Check that the container is active (`docker ps`).
-* Verify `DATABASE_URL` matches your database credentials.
-* Ensure port `5432` is not used by another PostgreSQL instance.
-
----
